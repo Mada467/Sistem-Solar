@@ -12,6 +12,8 @@ Planet::Planet()
     m_fScale = 1.0f;
     m_fRotationSpeed = 0.0f;
     m_fRotationAngle = 0.0f;
+    m_fRotationAngleX = 0.0f;
+    m_fRotationAngleZ = 0.0f;
     m_fOrbitSpeed = 0.0f;
     m_fOrbitAngle = 0.0f;
     m_fOrbitRadius = 0.0f;
@@ -65,34 +67,20 @@ bool Planet::Load(LPDIRECT3DDEVICE9 pDevice, const char* meshFile, const char* t
         if (textureFile != NULL)
         {
             D3DXCreateTextureFromFileEx(
-                pDevice,
-                textureFile,
-                D3DX_DEFAULT,
-                D3DX_DEFAULT,
-                D3DX_DEFAULT,
-                0,
-                D3DFMT_UNKNOWN,
-                D3DPOOL_MANAGED,
-                D3DX_FILTER_LINEAR,
-                D3DX_FILTER_LINEAR,
-                0, NULL, NULL,
-                &m_pTextures[i]);
+                pDevice, textureFile,
+                D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
+                0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED,
+                D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
+                0, NULL, NULL, &m_pTextures[i]);
         }
         else if (d3dxMaterials[i].pTextureFilename != NULL)
         {
             D3DXCreateTextureFromFileEx(
-                pDevice,
-                d3dxMaterials[i].pTextureFilename,
-                D3DX_DEFAULT,
-                D3DX_DEFAULT,
-                D3DX_DEFAULT,
-                0,
-                D3DFMT_UNKNOWN,
-                D3DPOOL_MANAGED,
-                D3DX_FILTER_LINEAR,
-                D3DX_FILTER_LINEAR,
-                0, NULL, NULL,
-                &m_pTextures[i]);
+                pDevice, d3dxMaterials[i].pTextureFilename,
+                D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
+                0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED,
+                D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
+                0, NULL, NULL, &m_pTextures[i]);
         }
     }
 
@@ -115,19 +103,32 @@ void Planet::Update(float deltaTime)
 
 void Planet::Render(LPDIRECT3DDEVICE9 pDevice)
 {
-    D3DXMATRIX matScale, matRotation, matTranslation, matWorld;
+    D3DXMATRIX matScale, matRotX, matRotY, matRotZ, matTranslation, matWorld;
 
     D3DXMatrixScaling(&matScale, m_fScale, m_fScale, m_fScale);
-    D3DXMatrixRotationY(&matRotation, m_fRotationAngle);
+    D3DXMatrixRotationX(&matRotX, m_fRotationAngleX);
+    D3DXMatrixRotationY(&matRotY, m_fRotationAngle);
+    D3DXMatrixRotationZ(&matRotZ, m_fRotationAngleZ);
     D3DXMatrixTranslation(&matTranslation, m_Position.x, m_Position.y, m_Position.z);
 
-    matWorld = matScale * matRotation * matTranslation;
+    matWorld = matScale * matRotX * matRotY * matRotZ * matTranslation;
     pDevice->SetTransform(D3DTS_WORLD, &matWorld);
 
-    pDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+    // LOGICA CORECTATĂ PENTRU ILUMINARE
+    // Dacă obiectul are orbită 0, înseamnă că e Soarele. Soarele nu primește umbre.
+    if (m_fOrbitRadius == 0.0f)
+    {
+        pDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
+    }
+    else
+    {
+        pDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
+    }
 
-    pDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    // Setări standard pentru combinarea texturii cu lumina
+    pDevice->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
     pDevice->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    pDevice->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_CURRENT);
     pDevice->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
 
     pDevice->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
@@ -136,11 +137,17 @@ void Planet::Render(LPDIRECT3DDEVICE9 pDevice)
 
     for (DWORD i = 0; i < m_dwNumMaterials; i++)
     {
-        pDevice->SetMaterial(&m_pMaterials[i]);
+        // Trimitem materialul doar dacă lumina este activată (pentru Pământ/Lună)
+        if (m_fOrbitRadius > 0.0f)
+        {
+            pDevice->SetMaterial(&m_pMaterials[i]);
+        }
+
         pDevice->SetTexture(0, m_pTextures[i]);
         m_pMesh->DrawSubset(i);
     }
 
+    // Resetăm starea de iluminare la TRUE pentru restul scenariului
     pDevice->SetRenderState(D3DRS_LIGHTING, TRUE);
 }
 
@@ -196,6 +203,28 @@ void Planet::SetOrbitRadius(float radius)
 void Planet::SetOrbitCenter(float x, float y, float z)
 {
     m_OrbitCenter = D3DXVECTOR3(x, y, z);
+}
+
+void Planet::AddRotationX(float angle)
+{
+    m_fRotationAngleX += angle;
+}
+
+void Planet::AddRotationY(float angle)
+{
+    m_fRotationAngle += angle;
+}
+
+void Planet::AddRotationZ(float angle)
+{
+    m_fRotationAngleZ += angle;
+}
+
+void Planet::Translate(float dx, float dy, float dz)
+{
+    m_Position.x += dx;
+    m_Position.y += dy;
+    m_Position.z += dz;
 }
 
 D3DXVECTOR3 Planet::GetPosition()

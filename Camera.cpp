@@ -82,6 +82,7 @@ void Camera::Update(LPDIRECT3DDEVICE9 pDevice)
         1000.0f);
     pDevice->SetTransform(D3DTS_PROJECTION, &matProj);
 }
+
 D3DXVECTOR3 Camera::GetPosition()
 {
     return m_Position;

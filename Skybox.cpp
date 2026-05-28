@@ -43,51 +43,39 @@ bool Skybox::Load(LPDIRECT3DDEVICE9 pDevice,
 {
     float s = m_fSize;
 
-    // Front
     CreateFace(pDevice, 0,
         D3DXVECTOR3(-s, -s, s), D3DXVECTOR3(-s, s, s),
         D3DXVECTOR3(s, -s, s), D3DXVECTOR3(s, s, s));
 
-    // Back
     CreateFace(pDevice, 1,
         D3DXVECTOR3(s, -s, -s), D3DXVECTOR3(s, s, -s),
         D3DXVECTOR3(-s, -s, -s), D3DXVECTOR3(-s, s, -s));
 
-    // Left
     CreateFace(pDevice, 2,
         D3DXVECTOR3(-s, -s, -s), D3DXVECTOR3(-s, s, -s),
         D3DXVECTOR3(-s, -s, s), D3DXVECTOR3(-s, s, s));
 
-    // Right
     CreateFace(pDevice, 3,
         D3DXVECTOR3(s, -s, s), D3DXVECTOR3(s, s, s),
         D3DXVECTOR3(s, -s, -s), D3DXVECTOR3(s, s, -s));
 
-    // Top
     CreateFace(pDevice, 4,
         D3DXVECTOR3(-s, s, s), D3DXVECTOR3(-s, s, -s),
         D3DXVECTOR3(s, s, s), D3DXVECTOR3(s, s, -s));
 
-    // Bottom
     CreateFace(pDevice, 5,
         D3DXVECTOR3(-s, -s, -s), D3DXVECTOR3(-s, -s, s),
         D3DXVECTOR3(s, -s, -s), D3DXVECTOR3(s, -s, s));
 
-    // Incarca texturile cu mipmapping
     const char* files[6] = { front, back, left, right, top, bottom };
     for (int i = 0; i < 6; i++)
     {
         if (FAILED(D3DXCreateTextureFromFileEx(
             pDevice, files[i],
-            D3DX_DEFAULT, D3DX_DEFAULT,
-            D3DX_DEFAULT,
-            0,
-            D3DFMT_UNKNOWN,
-            D3DPOOL_MANAGED,
-            D3DX_FILTER_LINEAR,
-            D3DX_FILTER_LINEAR,
-            0, NULL, NULL,
-            &m_pTextures[i])))
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
+            0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED,
+            D3DX_FILTER_LINEAR, D3DX_FILTER_LINEAR,
+            0, NULL, NULL, &m_pTextures[i])))
         {
             return false;
         }
@@ -126,15 +114,7 @@ void Skybox::Cleanup()
 {
     for (int i = 0; i < 6; i++)
     {
-        if (m_pTextures[i])
-        {
-            m_pTextures[i]->Release();
-            m_pTextures[i] = NULL;
-        }
-        if (m_pVB[i])
-        {
-            m_pVB[i]->Release();
-            m_pVB[i] = NULL;
-        }
+        if (m_pTextures[i]) { m_pTextures[i]->Release(); m_pTextures[i] = NULL; }
+        if (m_pVB[i]) { m_pVB[i]->Release();       m_pVB[i] = NULL; }
     }
 }

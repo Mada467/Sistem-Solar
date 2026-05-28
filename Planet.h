@@ -20,6 +20,12 @@ public:
     void SetOrbitRadius(float radius);
     void SetOrbitCenter(float x, float y, float z);
 
+    void AddRotationX(float angle);
+    void AddRotationY(float angle);
+    void AddRotationZ(float angle);
+
+    void Translate(float dx, float dy, float dz);
+
     D3DXVECTOR3 GetPosition();
 
 private:
@@ -33,6 +39,8 @@ private:
     float       m_fScale;
     float       m_fRotationSpeed;
     float       m_fRotationAngle;
+    float       m_fRotationAngleX;
+    float       m_fRotationAngleZ;
     float       m_fOrbitSpeed;
     float       m_fOrbitAngle;
     float       m_fOrbitRadius;
